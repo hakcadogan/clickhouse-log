@@ -54,6 +54,7 @@ services:
   grafana:
     image: ${GRAFANA_IMAGE:-grafana/grafana-oss:latest}
     container_name: grafana-ch
+    user: "0"
     restart: always
     ports:
       - "${GRAFANA_PORT:-3002}:3000"
