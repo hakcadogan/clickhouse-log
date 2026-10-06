@@ -1,6 +1,6 @@
 <clickhouse>
     <listen_host>0.0.0.0</listen_host>
-    <timezone from_env="TZ">Europe/Istanbul</timezone>
+    <timezone replace="1" from_env="TZ">Europe/Istanbul</timezone>
     
     <logger>
         <level>information</level>
