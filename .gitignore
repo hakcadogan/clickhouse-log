@@ -1,0 +1,29 @@
+# Environment files and secrets
+.env
+.env.local
+.env.*
+!.env.example
+
+# ClickHouse runtime data and logs (bind-mounted Docker volumes)
+clickhouse/data/
+clickhouse/logs/
+
+# Grafana runtime data, SQLite database, plugins, and generated exports
+grafana/
+
+# Local tooling and IDE state
+.agents/
+.aws/
+.codex/
+.vscode/
+.idea/
+*.code-workspace
+
+# OS, editor, and temporary files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+*.tmp
+*.bak

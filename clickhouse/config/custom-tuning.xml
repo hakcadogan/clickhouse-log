@@ -1,0 +1,12 @@
+<clickhouse>
+    <listen_host>0.0.0.0</listen_host>
+    <timezone from_env="TZ">Europe/Istanbul</timezone>
+    
+    <logger>
+        <level>information</level>
+        <size>10M</size>
+        <count>5</count>
+    </logger>
+
+    <max_concurrent_queries>100</max_concurrent_queries>
+</clickhouse>

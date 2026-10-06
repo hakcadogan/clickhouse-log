@@ -1,0 +1,71 @@
+networks:
+  ch_network:
+    driver: bridge
+
+services:
+  # --- CLICKHOUSE SERVER ---
+  clickhouse:
+    image: ${CLICKHOUSE_IMAGE:-clickhouse/clickhouse-server:latest}
+    container_name: clickhouse-server
+    restart: always
+    environment:
+      TZ: ${TZ:-Europe/Istanbul}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB}
+    ports:
+      - "${CLICKHOUSE_HTTP_PORT:-8123}:8123" # HTTP Arayüzü (Vector, Grafana, Tabix buraya bağlanır)
+      - "${CLICKHOUSE_NATIVE_PORT:-9000}:9000" # Native Protokol (Go, Java, php-clickhouse client'lar için)
+      - "${CLICKHOUSE_INTERSERVER_PORT:-9009}:9009" # Inter-server iletişim (Gelecekte Cluster/Replication için)
+    volumes:
+      - ./clickhouse/data:/var/lib/clickhouse
+      - ./clickhouse/logs:/var/log/clickhouse-server
+      - ./clickhouse/config/custom-tuning.xml:/etc/clickhouse-server/config.d/custom-tuning.xml
+      - ./clickhouse/config/users.xml:/etc/clickhouse-server/users.d/users.xml
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    networks:
+      - ch_network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # --- WEB UI (TABIX) ---
+  # ClickHouse içindeki tabloları görmek ve SQL çalıştırmak için hafif bir yönetim paneli
+  tabix:
+    image: ${TABIX_IMAGE:-spoonest/clickhouse-tabix-web-client:latest}
+    container_name: clickhouse-tabix
+    restart: always
+    environment:
+      TZ: ${TZ:-Europe/Istanbul}
+    ports:
+      - "${TABIX_PORT:-8080}:80"
+    networks:
+      - ch_network
+    depends_on:
+      - clickhouse
+
+  # --- GRAFANA (GÖRSELLEŞTİRME) ---
+  # Log grafiklerini ve metrikleri izleyeceğimiz ana dashboard arayüzü
+  grafana:
+    image: ${GRAFANA_IMAGE:-grafana/grafana-oss:latest}
+    container_name: grafana-ch
+    restart: always
+    ports:
+      - "${GRAFANA_PORT:-3002}:3000"
+    environment:
+      TZ: ${TZ:-Europe/Istanbul}
+      GF_DATE_FORMATS_DEFAULT_TIMEZONE: ${TZ:-Europe/Istanbul}
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_INSTALL_PLUGINS: ${GRAFANA_INSTALL_PLUGINS:-grafana-clickhouse-datasource}
+    volumes:
+      - ./grafana:/var/lib/grafana
+    networks:
+      - ch_network
+    depends_on:
+      - clickhouse
